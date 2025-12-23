@@ -4,6 +4,7 @@ query GetUserGroupAuditLogs($groupId: ID, $action: UserGroupAuditAction, $limit:
     action
     targetType
     targetId
+    details
     performedAt
     ipAddress
     performedBy

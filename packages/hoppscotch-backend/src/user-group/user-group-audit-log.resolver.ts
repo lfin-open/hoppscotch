@@ -3,8 +3,6 @@ import { UserGroupAuditLog } from './user-group.model';
 import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import * as O from 'fp-ts/Option';
-import { throwErr } from '../utils';
-import { USER_NOT_FOUND } from '../errors';
 
 @Resolver(() => UserGroupAuditLog)
 export class UserGroupAuditLogResolver {
@@ -24,5 +22,15 @@ export class UserGroupAuditLogResolver {
       currentRESTSession: JSON.stringify(userOption.value.currentRESTSession),
       currentGQLSession: JSON.stringify(userOption.value.currentGQLSession),
     };
+  }
+
+  @ResolveField(() => String, {
+    description: 'JSON details of the action',
+    nullable: true,
+  })
+  details(@Parent() log: UserGroupAuditLog): string | null {
+    const { details } = log as any; // Prisma includes this as Json type
+    if (!details) return null;
+    return JSON.stringify(details);
   }
 }

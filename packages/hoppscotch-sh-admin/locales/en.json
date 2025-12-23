@@ -577,9 +577,11 @@
     "team_id_required": "Team ID is required",
     "action": "Action",
     "target_type": "Target Type",
+    "target_id": "Target ID",
     "performed_by": "Performed By",
     "performed_at": "Performed At",
     "ip_address": "IP Address",
+    "audit_log_details": "Audit Log Details",
     "load_audit_logs_error": "Unable to load audit logs",
     "no_audit_logs": "No audit logs found"
   }

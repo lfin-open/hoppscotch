@@ -28,7 +28,10 @@
       </template>
 
       <template #body="{ row: log }">
-        <td class="py-2 px-7">
+        <td
+          class="py-2 px-7 cursor-pointer hover:bg-primaryLight transition"
+          @click="openDetailsModal(log)"
+        >
           <span
             class="text-xs font-medium px-2 py-1 rounded bg-primaryDark text-secondaryLight"
           >
@@ -36,11 +39,19 @@
           </span>
         </td>
 
-        <td class="py-2 px-7">{{ log.targetType }}</td>
+        <td
+          class="py-2 px-7 cursor-pointer hover:bg-primaryLight transition"
+          @click="openDetailsModal(log)"
+        >
+          {{ log.targetType }}
+        </td>
 
-        <td class="py-2 px-7">
+        <td
+          class="py-2 px-7 cursor-pointer hover:bg-primaryLight transition"
+          @click="openDetailsModal(log)"
+        >
           <div class="flex flex-col">
-            <span class="font-medium">
+            <span class="font-medium truncate">
               {{ log.user?.displayName || log.user?.email || t('users.unnamed') }}
             </span>
             <span v-if="log.user?.displayName" class="text-xs text-secondaryLight">
@@ -49,18 +60,107 @@
           </div>
         </td>
 
-        <td class="py-2 px-7">
+        <td
+          class="py-2 px-7 cursor-pointer hover:bg-primaryLight transition"
+          @click="openDetailsModal(log)"
+        >
           {{ formatDate(log.performedAt) }}
         </td>
 
-        <td class="py-2 px-7">{{ log.ipAddress || t('state.not_available') }}</td>
+        <td
+          class="py-2 px-7 cursor-pointer hover:bg-primaryLight transition"
+          @click="openDetailsModal(log)"
+        >
+          {{ log.ipAddress || '' }}
+        </td>
       </template>
     </HoppSmartTable>
+
+    <!-- Details Modal -->
+    <HoppSmartModal
+      v-if="showDetailsModal"
+      dialog
+      :title="t('user_groups.audit_log_details')"
+      @close="showDetailsModal = false"
+    >
+      <template #body>
+        <div class="flex flex-col space-y-4">
+          <!-- Action -->
+          <div>
+            <label class="text-secondaryLight text-sm">{{ t('user_groups.action') }}</label>
+            <div class="mt-1">
+              <span
+                class="text-xs font-medium px-2 py-1 rounded bg-primaryDark text-secondaryLight"
+              >
+                {{ selectedLog?.action }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Target Type & ID -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-secondaryLight text-sm">{{ t('user_groups.target_type') }}</label>
+              <div class="mt-1 font-medium">{{ selectedLog?.targetType }}</div>
+            </div>
+            <div>
+              <label class="text-secondaryLight text-sm">{{ t('user_groups.target_id') }}</label>
+              <div class="mt-1 font-medium">{{ selectedLog?.targetId || '' }}</div>
+            </div>
+          </div>
+
+          <!-- Performed By -->
+          <div>
+            <label class="text-secondaryLight text-sm">{{ t('user_groups.performed_by') }}</label>
+            <div class="mt-1">
+              <div class="flex flex-col">
+                <span class="font-medium">
+                  {{ selectedLog?.user?.displayName || selectedLog?.user?.email || t('users.unnamed') }}
+                </span>
+                <span v-if="selectedLog?.user?.displayName" class="text-xs text-secondaryLight">
+                  {{ selectedLog?.user.email }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Performed At -->
+          <div>
+            <label class="text-secondaryLight text-sm">{{ t('user_groups.performed_at') }}</label>
+            <div class="mt-1 font-medium">{{ selectedLog ? formatDate(selectedLog.performedAt) : '' }}</div>
+          </div>
+
+          <!-- IP Address -->
+          <div>
+            <label class="text-secondaryLight text-sm">{{ t('user_groups.ip_address') }}</label>
+            <div class="mt-1 font-medium">{{ selectedLog?.ipAddress || '' }}</div>
+          </div>
+
+          <!-- Details JSON -->
+          <div v-if="selectedLog?.details">
+            <label class="text-secondaryLight text-sm">{{ t('user_groups.details') }}</label>
+            <div class="mt-1 p-3 bg-primaryLight rounded font-mono text-xs overflow-auto max-h-64">
+              <pre>{{ formatDetails(selectedLog.details) }}</pre>
+            </div>
+          </div>
+        </div>
+      </template>
+      <template #footer>
+        <div class="flex justify-end">
+          <HoppButtonSecondary
+            :label="t('action.close')"
+            outline
+            filled
+            @click="showDetailsModal = false"
+          />
+        </div>
+      </template>
+    </HoppSmartModal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useQuery } from '@urql/vue';
 import { format } from 'date-fns';
 import { useI18n } from '~/composables/i18n';
@@ -72,9 +172,30 @@ const props = defineProps<{
   groupId: string;
 }>();
 
+// Modal state
+const showDetailsModal = ref(false);
+const selectedLog = ref<any>(null);
+
 // Format helper
 const formatDate = (date: string) => {
   return format(new Date(date), 'dd MMM yyyy, hh:mm a');
+};
+
+// Format details JSON
+const formatDetails = (details: string | null) => {
+  if (!details) return '';
+  try {
+    const parsed = JSON.parse(details);
+    return JSON.stringify(parsed, null, 2);
+  } catch {
+    return details;
+  }
+};
+
+// Open details modal
+const openDetailsModal = (log: any) => {
+  selectedLog.value = log;
+  showDetailsModal.value = true;
 };
 
 // Table headings
