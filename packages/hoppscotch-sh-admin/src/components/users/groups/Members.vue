@@ -39,7 +39,7 @@
           {{ member.user.displayName || t('users.unnamed') }}
         </td>
 
-        <td class="py-2 px-7">{{ member.user.email }}</td>
+        <td class="py-2 px-7 truncate">{{ member.user.email }}</td>
 
         <td class="py-2 px-7">
           <span

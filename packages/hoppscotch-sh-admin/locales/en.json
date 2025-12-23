@@ -481,6 +481,7 @@
     "valid_email": "Please enter a valid email address"
   },
   "user_groups": {
+    "user_groups": "Groups",
     "title": "User Groups",
     "create_group": "Create Group",
     "edit_group": "Edit Group",

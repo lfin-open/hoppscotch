@@ -80,6 +80,7 @@ import IconDashboard from '~icons/lucide/layout-dashboard';
 import IconSettings from '~icons/lucide/settings';
 import IconUser from '~icons/lucide/user';
 import IconUsers from '~icons/lucide/users';
+import IconUserCog from '~icons/lucide/user-cog';
 
 const route = useRoute()
 const t = useI18n();
@@ -108,6 +109,13 @@ const primaryNavigations: NavigationItem[] = [
     to: '/users',
     exact: false,
     baseRouteName: 'users'
+  },
+  {
+    label: t('user_groups.user_groups'),
+    icon: IconUserCog,
+    to: '/users/groups',
+    exact: false,
+    baseRouteName: 'users-groups'
   },
   {
     label: t('teams.teams'),
