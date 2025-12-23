@@ -966,3 +966,65 @@ export const PUBLISHED_DOCS_DELETION_FAILED = 'published_docs/deletion_failed';
  * (PublishedDocsService)
  */
 export const PUBLISHED_DOCS_NOT_FOUND = 'published_docs/not_found';
+
+// ============================================
+// User Groups Errors
+// ============================================
+
+/**
+ * User Group not found
+ * (UserGroupService)
+ */
+export const USER_GROUP_NOT_FOUND = 'user_group/not_found' as const;
+
+/**
+ * User Group name already taken
+ * (UserGroupService)
+ */
+export const USER_GROUP_NAME_TAKEN = 'user_group/name_taken' as const;
+
+/**
+ * User is already a member of the group
+ * (UserGroupService)
+ */
+export const USER_GROUP_MEMBER_EXISTS = 'user_group/member_exists' as const;
+
+/**
+ * User is not a member of the group
+ * (UserGroupService)
+ */
+export const USER_GROUP_MEMBER_NOT_FOUND =
+  'user_group/member_not_found' as const;
+
+/**
+ * Cannot remove yourself from group (Group Admin)
+ * (UserGroupService)
+ */
+export const USER_GROUP_CANNOT_REMOVE_SELF =
+  'user_group/cannot_remove_self' as const;
+
+/**
+ * Cannot remove last admin from group
+ * (UserGroupService)
+ */
+export const USER_GROUP_LAST_ADMIN = 'user_group/last_admin' as const;
+
+/**
+ * Access denied to user group
+ * (UserGroupGuards)
+ */
+export const USER_GROUP_ACCESS_DENIED = 'user_group/access_denied' as const;
+
+/**
+ * Group already has access to team
+ * (UserGroupService)
+ */
+export const USER_GROUP_TEAM_ACCESS_EXISTS =
+  'user_group/team_access_exists' as const;
+
+/**
+ * Group does not have access to team
+ * (UserGroupService)
+ */
+export const USER_GROUP_TEAM_ACCESS_NOT_FOUND =
+  'user_group/team_access_not_found' as const;
