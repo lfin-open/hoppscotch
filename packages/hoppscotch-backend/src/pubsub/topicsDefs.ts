@@ -29,6 +29,11 @@ import {
 } from 'src/user-collection/user-collections.model';
 import { Shortcode } from 'src/shortcode/shortcode.model';
 import { UserCollectionSortData } from 'src/orchestration/sort/sort.model';
+import {
+  UserGroup,
+  UserGroupMember,
+  UserGroupTeamAccess,
+} from 'src/user-group/user-group.model';
 
 // A custom message type that defines the topic and the corresponding payload.
 // For every module that publishes a subscription add its type def and the possible subscription type.
@@ -80,4 +85,8 @@ export type TopicDef = {
     topic: `shortcode/${string}/${'created' | 'revoked' | 'updated'}`
   ]: Shortcode;
   [topic: `infra_config/${string}/${'updated'}`]: string;
+  [topic: `user_group/${string}/${'updated'}`]: UserGroup;
+  [topic: `user_group/${string}/${'member_added'}`]: UserGroupMember;
+  [topic: `user_group/${string}/${'member_removed'}`]: string;
+  [topic: `user_group/${string}/${'team_access_changed'}`]: UserGroupTeamAccess;
 };

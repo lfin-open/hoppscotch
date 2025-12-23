@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { TeamService } from '../team.service';
 import { TeamAccessRole } from '../team.model';
@@ -10,12 +16,15 @@ import {
   BUG_TEAM_NO_TEAM_ID,
   TEAM_MEMBER_NOT_FOUND,
 } from 'src/errors';
+import { UserGroupPermissionService } from '../../user-group/user-group-permission.service';
 
 @Injectable()
 export class GqlTeamMemberGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly teamService: TeamService,
+    @Inject(forwardRef(() => UserGroupPermissionService))
+    private readonly userGroupPermissionService: UserGroupPermissionService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -34,10 +43,16 @@ export class GqlTeamMemberGuard implements CanActivate {
     const { teamID } = gqlExecCtx.getArgs<{ teamID: string }>();
     if (!teamID) throw new Error(BUG_TEAM_NO_TEAM_ID);
 
-    const teamMember = await this.teamService.getTeamMember(teamID, user.uid);
-    if (!teamMember) throw new Error(TEAM_MEMBER_NOT_FOUND);
+    // Use UserGroupPermissionService to resolve role (includes direct + group membership)
+    const userRole =
+      await this.userGroupPermissionService.resolveUserTeamRole(
+        user.uid,
+        teamID,
+      );
 
-    if (requireRoles.includes(teamMember.role)) return true;
+    if (!userRole) throw new Error(TEAM_MEMBER_NOT_FOUND);
+
+    if (requireRoles.includes(userRole)) return true;
 
     throw new Error(TEAM_NOT_REQUIRED_ROLE);
   }
