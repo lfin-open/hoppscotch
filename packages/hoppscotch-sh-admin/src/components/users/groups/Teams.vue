@@ -42,7 +42,7 @@
         </td>
 
         <td @click.stop class="flex justify-end w-20">
-          <div class="mt-2 mr-5">
+          <div class="mr-5">
             <HoppButtonSecondary
               v-tippy="{ theme: 'tooltip' }"
               :icon="IconTrash"
