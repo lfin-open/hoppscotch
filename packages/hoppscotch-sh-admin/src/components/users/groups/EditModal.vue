@@ -10,24 +10,93 @@
           v-model="name"
           :label="t('user_groups.group_name')"
           input-styles="floating-input"
-          :placeholder="t('user_groups.group_name_placeholder')"
         />
 
         <HoppSmartInput
           v-model="description"
-          :label="t('user_groups.description')"
+          :label="t('user_groups.description_placeholder')"
           input-styles="floating-input"
-          :placeholder="t('user_groups.description_placeholder')"
         />
 
         <div class="flex flex-col">
           <label class="text-secondaryLight text-tiny mb-2">
             {{ t('user_groups.default_role') }}
           </label>
-          <HoppSmartSelect
-            v-model="role"
-            :options="roleOptions"
-          />
+          <tippy
+            interactive
+            trigger="click"
+            theme="popover"
+            placement="top-start"
+            :on-shown="() => tippyActions?.focus()"
+          >
+            <span class="relative">
+              <input
+                class="flex flex-1 w-full px-4 py-2 bg-primary border border-divider rounded cursor-pointer"
+                :placeholder="t('user_groups.default_role')"
+                :value="getRoleLabel(role)"
+                readonly
+              />
+              <span
+                class="absolute right-4 top-1/2 transform !-translate-y-1/2"
+              >
+                <IconChevronDown />
+              </span>
+            </span>
+            <template #content="{ hide }">
+              <div
+                ref="tippyActions"
+                class="flex flex-col focus:outline-none"
+                tabindex="0"
+                @keyup.escape="hide()"
+              >
+                <HoppSmartItem
+                  :label="t('user_groups.role_viewer')"
+                  :icon="
+                    role === UserGroupTeamAccessRole.Viewer
+                      ? IconCircleDot
+                      : IconCircle
+                  "
+                  :active="role === UserGroupTeamAccessRole.Viewer"
+                  @click="
+                    () => {
+                      role = UserGroupTeamAccessRole.Viewer;
+                      hide();
+                    }
+                  "
+                />
+                <HoppSmartItem
+                  :label="t('user_groups.role_editor')"
+                  :icon="
+                    role === UserGroupTeamAccessRole.Editor
+                      ? IconCircleDot
+                      : IconCircle
+                  "
+                  :active="role === UserGroupTeamAccessRole.Editor"
+                  @click="
+                    () => {
+                      role = UserGroupTeamAccessRole.Editor;
+                      hide();
+                    }
+                  "
+                />
+                <HoppSmartItem
+                  :label="t('user_groups.role_owner')"
+                  :icon="
+                    role === UserGroupTeamAccessRole.Owner
+                      ? IconCircleDot
+                      : IconCircle
+                  "
+                  :active="role === UserGroupTeamAccessRole.Owner"
+                  @click="
+                    () => {
+                      role = UserGroupTeamAccessRole.Owner;
+                      hide();
+                    }
+                  "
+                />
+              </div>
+            </template>
+          </tippy>
         </div>
       </div>
     </template>
@@ -54,6 +123,9 @@ import { ref, watch } from 'vue';
 import { useMutation } from '@urql/vue';
 import { useI18n } from '~/composables/i18n';
 import { useToast } from '~/composables/toast';
+import IconChevronDown from '~icons/lucide/chevron-down';
+import IconCircle from '~icons/lucide/circle';
+import IconCircleDot from '~icons/lucide/circle-dot';
 import {
   UpdateUserGroupDocument,
   UserGroupTeamAccessRole,
@@ -80,6 +152,19 @@ const emit = defineEmits<{
 const name = ref(props.group.name);
 const description = ref(props.group.description || '');
 const role = ref<UserGroupTeamAccessRole>(props.group.role);
+
+// Template ref
+const tippyActions = ref<any | null>(null);
+
+// Helper function to get role label
+const getRoleLabel = (roleValue: UserGroupTeamAccessRole) => {
+  const labels = {
+    [UserGroupTeamAccessRole.Viewer]: t('user_groups.role_viewer'),
+    [UserGroupTeamAccessRole.Editor]: t('user_groups.role_editor'),
+    [UserGroupTeamAccessRole.Owner]: t('user_groups.role_owner'),
+  };
+  return labels[roleValue];
+};
 
 // Watch for group changes
 watch(

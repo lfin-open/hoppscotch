@@ -490,6 +490,7 @@
     "description": "Description",
     "description_placeholder": "Enter group description (optional)",
     "default_role": "Default Role",
+    "role": "Role",
     "role_viewer": "Viewer",
     "role_editor": "Editor",
     "role_owner": "Owner",

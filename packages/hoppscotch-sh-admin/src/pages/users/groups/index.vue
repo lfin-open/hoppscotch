@@ -203,7 +203,7 @@ const toast = useToast();
 const router = useRouter();
 
 // Time and Date Helpers
-const getCreatedDate = (date: string) => format(new Date(date), 'dd-MMM-yyyy');
+const getCreatedDate = (date: string) => format(new Date(date), 'yyyy-MM-dd');
 const getCreatedTime = (date: string) => format(new Date(date), 'hh:mm a');
 
 // Role Helpers
