@@ -18,11 +18,15 @@ import { GqlSystemAdminGuard } from './guards/gql-system-admin.guard';
 import { GqlUserGroupAdminGuard } from './guards/gql-user-group-admin.guard';
 import { GqlUser } from '../decorators/gql-user.decorator';
 import { AuthUser } from '../types/AuthUser';
-import { TeamAccessRole } from '../team/team.model';
 import {
   UserGroup,
   UserGroupMember,
   UserGroupTeamAccess,
+  TeamAccessRole,
+  toGraphQLUserGroup,
+  toGraphQLUserGroupMember,
+  toGraphQLUserGroupTeamAccess,
+  toPrismaTeamAccessRole,
 } from './user-group.model';
 import * as E from 'fp-ts/Either';
 import { throwErr } from '../utils';
@@ -48,7 +52,8 @@ export class UserGroupResolver {
     @Args({ name: 'search', type: () => String, nullable: true })
     search?: string,
   ): Promise<UserGroup[]> {
-    return this.userGroupService.getGroups(limit, offset, search);
+    const groups = await this.userGroupService.getGroups(limit, offset, search);
+    return groups.map(toGraphQLUserGroup);
   }
 
   @Query(() => UserGroup, {
@@ -59,7 +64,8 @@ export class UserGroupResolver {
   async userGroup(
     @Args({ name: 'id', type: () => ID }) id: string,
   ): Promise<UserGroup | null> {
-    return this.userGroupService.getGroupById(id);
+    const group = await this.userGroupService.getGroupById(id);
+    return group ? toGraphQLUserGroup(group) : null;
   }
 
   @Query(() => [UserGroup], {
@@ -67,7 +73,8 @@ export class UserGroupResolver {
   })
   @UseGuards(GqlAuthGuard)
   async myUserGroups(@GqlUser() user: AuthUser): Promise<UserGroup[]> {
-    return this.userGroupService.getUserGroups(user.uid);
+    const groups = await this.userGroupService.getUserGroups(user.uid);
+    return groups.map(toGraphQLUserGroup);
   }
 
   @Query(() => [UserGroup], {
@@ -77,7 +84,8 @@ export class UserGroupResolver {
   async teamUserGroups(
     @Args({ name: 'teamId', type: () => ID }) teamId: string,
   ): Promise<UserGroup[]> {
-    return this.userGroupService.getTeamGroups(teamId);
+    const groups = await this.userGroupService.getTeamGroups(teamId);
+    return groups.map(toGraphQLUserGroup);
   }
 
   // Mutations
@@ -94,12 +102,12 @@ export class UserGroupResolver {
   ): Promise<UserGroup> {
     const result = await this.userGroupService.createGroup(
       name,
-      role,
+      toPrismaTeamAccessRole(role),
       description,
       user.uid,
     );
     if (E.isLeft(result)) throwErr(result.left);
-    return result.right;
+    return toGraphQLUserGroup(result.right);
   }
 
   @Mutation(() => UserGroup, {
@@ -117,11 +125,15 @@ export class UserGroupResolver {
   ): Promise<UserGroup> {
     const result = await this.userGroupService.updateGroup(
       groupId,
-      { name, description, role },
+      {
+        name,
+        description,
+        role: role ? toPrismaTeamAccessRole(role) : undefined,
+      },
       user.uid,
     );
     if (E.isLeft(result)) throwErr(result.left);
-    return result.right;
+    return toGraphQLUserGroup(result.right);
   }
 
   @Mutation(() => Boolean, {
@@ -155,7 +167,7 @@ export class UserGroupResolver {
       user.uid,
     );
     if (E.isLeft(result)) throwErr(result.left);
-    return result.right;
+    return toGraphQLUserGroupMember(result.right);
   }
 
   @Mutation(() => Boolean, {
@@ -191,7 +203,7 @@ export class UserGroupResolver {
       user.uid,
     );
     if (E.isLeft(result)) throwErr(result.left);
-    return result.right;
+    return toGraphQLUserGroupTeamAccess(result.right);
   }
 
   @Mutation(() => Boolean, {

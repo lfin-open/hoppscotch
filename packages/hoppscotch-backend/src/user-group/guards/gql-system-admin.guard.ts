@@ -1,10 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  BUG_AUTH_NO_USER_CTX,
-  USER_GROUP_ACCESS_DENIED,
-} from 'src/errors';
+import { BUG_AUTH_NO_USER_CTX, USER_GROUP_ACCESS_DENIED } from 'src/errors';
 
 /**
  * Guard to check if user is a system admin

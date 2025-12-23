@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { UserGroupService } from './user-group.service';
 import { UserGroupResolver } from './user-group.resolver';
 import { UserGroupMemberResolver } from './user-group-member.resolver';

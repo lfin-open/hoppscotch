@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { MockServerService } from './mock-server.service';
 import { MockServerAnalyticsService } from './mock-server-analytics.service';
@@ -6,6 +6,7 @@ import { MockServerLoggingInterceptor } from './mock-server-logging.interceptor'
 import { MockServerResolver } from './mock-server.resolver';
 import { TeamModule } from 'src/team/team.module';
 import { TeamRequestModule } from 'src/team-request/team-request.module';
+import { UserGroupModule } from 'src/user-group/user-group.module';
 import { MockServerController } from './mock-server.controller';
 import { AccessTokenModule } from 'src/access-token/access-token.module';
 import { TeamCollectionModule } from 'src/team-collection/team-collection.module';
@@ -19,6 +20,7 @@ import { UserCollectionModule } from 'src/user-collection/user-collection.module
     TeamCollectionModule,
     TeamRequestModule,
     AccessTokenModule,
+    forwardRef(() => UserGroupModule),
   ],
   controllers: [MockServerController],
   providers: [

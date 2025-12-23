@@ -44,15 +44,15 @@ export class GqlTeamMemberGuard implements CanActivate {
     if (!teamID) throw new Error(BUG_TEAM_NO_TEAM_ID);
 
     // Use UserGroupPermissionService to resolve role (includes direct + group membership)
-    const userRole =
-      await this.userGroupPermissionService.resolveUserTeamRole(
-        user.uid,
-        teamID,
-      );
+    const userRole = await this.userGroupPermissionService.resolveUserTeamRole(
+      user.uid,
+      teamID,
+    );
 
     if (!userRole) throw new Error(TEAM_MEMBER_NOT_FOUND);
 
-    if (requireRoles.includes(userRole)) return true;
+    // Type assertion needed: Prisma enum and GraphQL enum have same values but are different types
+    if (requireRoles.includes(userRole as TeamAccessRole)) return true;
 
     throw new Error(TEAM_NOT_REQUIRED_ROLE);
   }

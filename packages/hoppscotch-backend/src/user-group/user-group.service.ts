@@ -8,7 +8,12 @@ import {
   UserGroup,
   UserGroupMember,
   UserGroupTeamAccess,
-} from '@prisma/client';
+} from '../generated/prisma/client';
+import {
+  toGraphQLUserGroup,
+  toGraphQLUserGroupMember,
+  toGraphQLUserGroupTeamAccess,
+} from './user-group.model';
 import * as E from 'fp-ts/Either';
 
 @Injectable()
@@ -97,7 +102,7 @@ export class UserGroupService {
     });
 
     // Subscription 발행
-    this.pubsub.publish(`user_group/${id}/updated`, group);
+    this.pubsub.publish(`user_group/${id}/updated`, toGraphQLUserGroup(group));
 
     return E.right(group);
   }
@@ -180,7 +185,10 @@ export class UserGroupService {
     });
 
     // Subscription 발행
-    this.pubsub.publish(`user_group/${groupId}/member_added`, member);
+    this.pubsub.publish(
+      `user_group/${groupId}/member_added`,
+      toGraphQLUserGroupMember(member),
+    );
 
     return E.right(member);
   }
@@ -284,7 +292,10 @@ export class UserGroupService {
     });
 
     // Subscription 발행
-    this.pubsub.publish(`user_group/${groupId}/team_access_changed`, access);
+    this.pubsub.publish(
+      `user_group/${groupId}/team_access_changed`,
+      toGraphQLUserGroupTeamAccess(access),
+    );
 
     return E.right(access);
   }

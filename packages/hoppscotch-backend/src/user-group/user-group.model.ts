@@ -1,5 +1,73 @@
 import { ObjectType, Field, ID, registerEnumType } from '@nestjs/graphql';
-import { TeamAccessRole } from '../team/team.model';
+
+// UserGroup-specific types (imported from Prisma for type safety)
+import {
+  TeamAccessRole as PrismaTeamAccessRole,
+  UserGroup as PrismaUserGroup,
+  UserGroupMember as PrismaUserGroupMember,
+  UserGroupTeamAccess as PrismaUserGroupTeamAccess,
+} from '../generated/prisma/client';
+
+// Re-export Prisma enum as GraphQL enum
+export enum TeamAccessRole {
+  OWNER = 'OWNER',
+  VIEWER = 'VIEWER',
+  EDITOR = 'EDITOR',
+}
+
+registerEnumType(TeamAccessRole, {
+  name: 'UserGroupTeamAccessRole',
+  description: 'Team access role for user groups',
+});
+
+// Type conversion utilities
+export function toGraphQLUserGroup(prismaGroup: PrismaUserGroup): UserGroup {
+  return {
+    id: prismaGroup.id,
+    name: prismaGroup.name,
+    description: prismaGroup.description,
+    role: prismaGroup.role as TeamAccessRole,
+    createdAt: prismaGroup.createdAt,
+    updatedAt: prismaGroup.updatedAt,
+  };
+}
+
+export function toGraphQLUserGroupMember(
+  prismaMember: PrismaUserGroupMember,
+): UserGroupMember {
+  return {
+    id: prismaMember.id,
+    userUid: prismaMember.userUid,
+    groupId: prismaMember.groupId,
+    isAdmin: prismaMember.isAdmin,
+    addedBy: prismaMember.addedBy,
+    addedAt: prismaMember.addedAt,
+  };
+}
+
+export function toGraphQLUserGroupTeamAccess(
+  prismaAccess: PrismaUserGroupTeamAccess,
+): UserGroupTeamAccess {
+  return {
+    id: prismaAccess.id,
+    groupId: prismaAccess.groupId,
+    teamId: prismaAccess.teamId,
+    assignedBy: prismaAccess.assignedBy,
+    assignedAt: prismaAccess.assignedAt,
+  };
+}
+
+export function toPrismaTeamAccessRole(
+  graphqlRole: TeamAccessRole,
+): PrismaTeamAccessRole {
+  return graphqlRole as PrismaTeamAccessRole;
+}
+
+export function toGraphQLTeamAccessRole(
+  prismaRole: PrismaTeamAccessRole,
+): TeamAccessRole {
+  return prismaRole as TeamAccessRole;
+}
 
 @ObjectType()
 export class UserGroup {

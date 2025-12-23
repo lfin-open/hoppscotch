@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UserGroupAuditAction } from '@prisma/client';
+import { UserGroupAuditAction } from '../generated/prisma/client';
 
 interface AuditLogInput {
   groupId: string | null;

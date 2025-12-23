@@ -14,6 +14,9 @@ import { UserGroupMember } from './user-group.model';
 import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { GqlThrottlerGuard } from '../guards/gql-throttler.guard';
+import * as O from 'fp-ts/Option';
+import { throwErr } from '../utils';
+import { USER_NOT_FOUND } from '../errors';
 
 @UseGuards(GqlThrottlerGuard)
 @Resolver(() => UserGroupMember)
@@ -42,6 +45,13 @@ export class UserGroupMemberResolver {
   })
   async user(@Parent() member: UserGroupMember): Promise<User> {
     const { userUid } = member as any; // Prisma includes this
-    return this.userService.findUserById(userUid);
+    const userOption = await this.userService.findUserById(userUid);
+    if (O.isNone(userOption)) throwErr(USER_NOT_FOUND);
+
+    return {
+      ...userOption.value,
+      currentRESTSession: JSON.stringify(userOption.value.currentRESTSession),
+      currentGQLSession: JSON.stringify(userOption.value.currentGQLSession),
+    };
   }
 }
