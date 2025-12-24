@@ -30,6 +30,7 @@ import {
   toGraphQLUserGroupTeamAccess,
   toPrismaTeamAccessRole,
 } from './user-group.model';
+import { Team } from '../team/team.model';
 import * as E from 'fp-ts/Either';
 import { throwErr } from '../utils';
 import { GqlThrottlerGuard } from '../guards/gql-throttler.guard';
@@ -272,6 +273,18 @@ export class UserGroupResolver {
   async teamCount(@Parent() group: UserGroup): Promise<number> {
     const teams = await this.userGroupService.getGroupTeamAccess(group.id);
     return teams.length;
+  }
+
+  @ResolveField(() => [Team], {
+    description: 'List of teams this group has access to',
+  })
+  async accessibleTeams(@Parent() group: UserGroup): Promise<Team[]> {
+    const teamAccess = await this.userGroupService.getGroupTeamAccess(group.id);
+    // Extract team objects from the access records
+    return teamAccess.map((access) => ({
+      id: access.teamId,
+      name: access.team.name,
+    }));
   }
 
   // Subscriptions

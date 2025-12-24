@@ -1,5 +1,13 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { TeamMember, TeamAccessRole, Team } from './team.model';
+import {
+  TeamMember,
+  TeamAccessRole,
+  Team,
+  TeamAccessInfo,
+  TeamAccessType,
+  DirectAccessInfo,
+  GroupAccessInfo,
+} from './team.model';
 import { PrismaService } from '../prisma/prisma.service';
 import { TeamMember as DbTeamMember } from 'src/generated/prisma/client';
 import { UserService } from '../user/user.service';
@@ -261,36 +269,61 @@ export class TeamService implements UserDataHandler, OnModuleInit {
   }
 
   async getTeamsOfUser(uid: string, cursor: string | null): Promise<Team[]> {
-    if (!cursor) {
-      const entries = await this.prisma.teamMember.findMany({
-        take: 10,
-        where: {
-          userUid: uid,
-        },
-        include: {
-          team: true,
-        },
-      });
+    // Get teams through direct membership
+    const directTeamEntries = await this.prisma.teamMember.findMany({
+      where: {
+        userUid: uid,
+      },
+      include: {
+        team: true,
+      },
+    });
 
-      return entries.map((entry) => entry.team);
-    } else {
-      const entries = await this.prisma.teamMember.findMany({
-        take: 10,
-        skip: 1,
-        cursor: {
-          teamID_userUid: {
-            teamID: cursor,
-            userUid: uid,
+    // Get teams through group membership
+    const groupTeamAccess = await this.prisma.userGroupTeamAccess.findMany({
+      where: {
+        group: {
+          members: {
+            some: {
+              userUid: uid,
+            },
           },
         },
-        where: {
-          userUid: uid,
-        },
-        include: {
-          team: true,
-        },
-      });
-      return entries.map((entry) => entry.team);
+      },
+      include: {
+        team: true,
+      },
+    });
+
+    // Combine both sources and deduplicate by team ID
+    const teamMap = new Map<string, Team>();
+
+    // Add direct teams
+    directTeamEntries.forEach((entry) => {
+      teamMap.set(entry.team.id, entry.team);
+    });
+
+    // Add group-based teams
+    groupTeamAccess.forEach((access) => {
+      if (!teamMap.has(access.team.id)) {
+        teamMap.set(access.team.id, access.team);
+      }
+    });
+
+    // Convert to array and sort by ID for consistent ordering
+    const allTeams = Array.from(teamMap.values()).sort((a, b) =>
+      a.id.localeCompare(b.id),
+    );
+
+    // Apply cursor-based pagination
+    if (!cursor) {
+      return allTeams.slice(0, 10);
+    } else {
+      const cursorIndex = allTeams.findIndex((team) => team.id === cursor);
+      if (cursorIndex === -1) {
+        return [];
+      }
+      return allTeams.slice(cursorIndex + 1, cursorIndex + 11);
     }
   }
 
@@ -389,8 +422,50 @@ export class TeamService implements UserDataHandler, OnModuleInit {
     teamID: string,
     userUid: string,
   ): Promise<TeamAccessRole | null> {
+    // Check direct team membership
     const teamMember = await this.getTeamMember(teamID, userUid);
-    return teamMember ? teamMember.role : null;
+
+    // Check group-based access
+    const groupAccess = await this.prisma.userGroupTeamAccess.findMany({
+      where: {
+        teamId: teamID,
+        group: {
+          members: {
+            some: {
+              userUid: userUid,
+            },
+          },
+        },
+      },
+      include: {
+        group: true,
+      },
+    });
+
+    // Collect all roles
+    const roles: TeamAccessRole[] = [];
+
+    if (teamMember) {
+      roles.push(teamMember.role);
+    }
+
+    groupAccess.forEach((access) => {
+      roles.push(access.group.role as TeamAccessRole);
+    });
+
+    // If no access at all, return null
+    if (roles.length === 0) {
+      return null;
+    }
+
+    // Return the highest priority role
+    if (roles.includes(TeamAccessRole.OWNER)) {
+      return TeamAccessRole.OWNER;
+    }
+    if (roles.includes(TeamAccessRole.EDITOR)) {
+      return TeamAccessRole.EDITOR;
+    }
+    return TeamAccessRole.VIEWER;
   }
 
   isUserSoleOwnerInAnyTeam(uid: string): T.Task<boolean> {
@@ -542,5 +617,104 @@ export class TeamService implements UserDataHandler, OnModuleInit {
   async getTeamsCount() {
     const teamsCount = await this.prisma.team.count();
     return teamsCount;
+  }
+
+  /**
+   * Get comprehensive access information for a user to a team
+   * Includes direct membership and group-based access
+   *
+   * @param teamID - ID of the team
+   * @param userUid - UID of the user
+   * @returns TeamAccessInfo object or null if no access
+   */
+  async getUserTeamAccessInfo(
+    teamID: string,
+    userUid: string,
+  ): Promise<TeamAccessInfo | null> {
+    // 1. Check direct membership
+    const directMember = await this.prisma.teamMember.findUnique({
+      where: {
+        teamID_userUid: {
+          teamID,
+          userUid,
+        },
+      },
+    });
+
+    // 2. Check group-based access
+    const groupAccesses = await this.prisma.userGroupTeamAccess.findMany({
+      where: {
+        teamId: teamID,
+        group: {
+          members: {
+            some: {
+              userUid,
+            },
+          },
+        },
+      },
+      include: {
+        group: true,
+      },
+    });
+
+    // 3. If no access at all, return null
+    if (!directMember && groupAccesses.length === 0) {
+      return null;
+    }
+
+    // 4. Determine access type
+    let accessType: TeamAccessType;
+    if (directMember && groupAccesses.length > 0) {
+      accessType = TeamAccessType.BOTH;
+    } else if (directMember) {
+      accessType = TeamAccessType.DIRECT;
+    } else {
+      accessType = TeamAccessType.GROUP;
+    }
+
+    // 5. Calculate effective role (highest priority)
+    const roles: TeamAccessRole[] = [];
+    if (directMember) {
+      roles.push(TeamAccessRole[directMember.role]);
+    }
+    groupAccesses.forEach((ga) => {
+      roles.push(TeamAccessRole[ga.group.role]);
+    });
+
+    const effectiveRole = this.getHighestRole(roles);
+
+    // 6. Build DirectAccessInfo
+    const directAccess: DirectAccessInfo | undefined = directMember
+      ? {
+          role: TeamAccessRole[directMember.role],
+          addedAt: new Date(), // TeamMember model doesn't have addedAt field
+        }
+      : undefined;
+
+    // 7. Build GroupAccessInfo array
+    const groupAccess: GroupAccessInfo[] = groupAccesses.map((ga) => ({
+      groupId: ga.group.id,
+      groupName: ga.group.name,
+      role: TeamAccessRole[ga.group.role],
+      assignedAt: ga.assignedAt,
+    }));
+
+    return {
+      type: accessType,
+      effectiveRole,
+      directAccess,
+      groupAccess,
+    };
+  }
+
+  /**
+   * Get the highest priority role from a list of roles
+   * Priority: OWNER > EDITOR > VIEWER
+   */
+  private getHighestRole(roles: TeamAccessRole[]): TeamAccessRole {
+    if (roles.includes(TeamAccessRole.OWNER)) return TeamAccessRole.OWNER;
+    if (roles.includes(TeamAccessRole.EDITOR)) return TeamAccessRole.EDITOR;
+    return TeamAccessRole.VIEWER;
   }
 }

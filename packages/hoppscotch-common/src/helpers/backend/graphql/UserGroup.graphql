@@ -1,0 +1,12 @@
+query UserGroup($id: ID!) {
+  userGroup(id: $id) {
+    id
+    name
+    description
+    role
+    accessibleTeams {
+      id
+      name
+    }
+  }
+}

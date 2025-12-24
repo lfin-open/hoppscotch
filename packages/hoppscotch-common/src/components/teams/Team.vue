@@ -28,11 +28,9 @@
           >
             {{ team.name || t("state.nothing_found") }}
           </label>
-          <icon-lucide-users
-            v-if="team.hasGroupAccess"
-            v-tippy="{ theme: 'tooltip' }"
-            :title="t('team.access_via_groups')"
-            class="svg-icons text-accent"
+          <TeamsTeamAccessBadge
+            v-if="team.myAccessInfo"
+            :access-info="team.myAccessInfo"
           />
         </div>
         <TeamsMemberStack :team-members="team.teamMembers" class="mt-4" />

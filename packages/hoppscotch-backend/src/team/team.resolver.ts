@@ -1,4 +1,12 @@
-import { Team, TeamMember, TeamAccessRole } from './team.model';
+import {
+  Team,
+  TeamMember,
+  TeamAccessRole,
+  TeamAccessInfo,
+  TeamAccessType,
+  DirectAccessInfo,
+  GroupAccessInfo,
+} from './team.model';
 import {
   Resolver,
   ResolveField,
@@ -99,6 +107,19 @@ export class TeamResolver {
       team.id,
       TeamAccessRole.VIEWER,
     );
+  }
+
+  @ResolveField(() => TeamAccessInfo, {
+    description:
+      'Access information for the current user (direct membership, group access, or both)',
+    nullable: true,
+  })
+  @UseGuards(GqlAuthGuard)
+  async myAccessInfo(
+    @Parent() team: Team,
+    @GqlUser() user: AuthUser,
+  ): Promise<TeamAccessInfo | null> {
+    return this.teamService.getUserTeamAccessInfo(team.id, user.uid);
   }
 
   // Query

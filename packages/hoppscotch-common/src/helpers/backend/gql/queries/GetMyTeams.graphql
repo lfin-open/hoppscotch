@@ -4,6 +4,20 @@ query GetMyTeams($cursor: ID) {
     name
     myRole
     ownersCount
+    myAccessInfo {
+      type
+      effectiveRole
+      directAccess {
+        role
+        addedAt
+      }
+      groupAccess {
+        groupId
+        groupName
+        role
+        assignedAt
+      }
+    }
     teamMembers {
       membershipID
       user {

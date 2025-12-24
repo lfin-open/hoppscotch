@@ -1,9 +1,15 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { TeamCollectionService } from '../team-collection.service';
-import { TeamService } from '../../team/team.service';
 import { TeamAccessRole } from '../../team/team.model';
+import { UserGroupPermissionService } from '../../user-group/user-group-permission.service';
 import {
   BUG_TEAM_NO_REQUIRE_TEAM_ROLE,
   BUG_AUTH_NO_USER_CTX,
@@ -17,8 +23,9 @@ import * as E from 'fp-ts/Either';
 export class GqlCollectionTeamMemberGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly teamService: TeamService,
     private readonly teamCollectionService: TeamCollectionService,
+    @Inject(forwardRef(() => UserGroupPermissionService))
+    private readonly userGroupPermissionService: UserGroupPermissionService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -40,12 +47,14 @@ export class GqlCollectionTeamMemberGuard implements CanActivate {
       await this.teamCollectionService.getCollection(collectionID);
     if (E.isLeft(collection)) throw new Error(TEAM_INVALID_COLL_ID);
 
-    const member = await this.teamService.getTeamMember(
-      collection.right.teamID,
+    // Use UserGroupPermissionService to resolve role (includes direct + group membership)
+    const userRole = await this.userGroupPermissionService.resolveUserTeamRole(
       user.uid,
+      collection.right.teamID,
     );
-    if (!member) throw new Error(TEAM_REQ_NOT_MEMBER);
 
-    return requireRoles.includes(member.role);
+    if (!userRole) throw new Error(TEAM_REQ_NOT_MEMBER);
+
+    return requireRoles.includes(userRole as TeamAccessRole);
   }
 }
