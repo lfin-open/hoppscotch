@@ -100,26 +100,9 @@
               <HoppSmartItem
                 :icon="IconGithub"
                 :label="`${t('app.github')}`"
-                to="https://github.com/hoppscotch/hoppscotch"
+                to="https://github.com/lfin-open/hoppscotch"
                 blank
                 @click="hide()"
-              />
-              <HoppSmartItem
-                :icon="IconTwitter"
-                :label="`${t('app.twitter')}`"
-                to="https://hoppscotch.io/twitter"
-                blank
-                @click="hide()"
-              />
-              <HoppSmartItem
-                :icon="IconUserPlus"
-                :label="`${t('app.invite')}`"
-                @click="
-                  () => {
-                    invokeAction('modals.share.toggle')
-                    hide()
-                  }
-                "
               />
               <HoppSmartItem
                 :icon="IconLock"
@@ -205,8 +188,6 @@ import IconSidebarOpen from "~icons/lucide/sidebar-open"
 import IconShieldCheck from "~icons/lucide/shield-check"
 import IconBook from "~icons/lucide/book"
 import IconGithub from "~icons/lucide/github"
-import IconTwitter from "~icons/lucide/twitter"
-import IconUserPlus from "~icons/lucide/user-plus"
 import IconLock from "~icons/lucide/lock"
 import IconHelpCircle from "~icons/lucide/help-circle"
 import { useSetting } from "@composables/settings"

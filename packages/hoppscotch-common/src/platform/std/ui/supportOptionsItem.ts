@@ -50,7 +50,7 @@ export const github: HoppSupportOptionsMenuItem = {
   icon: IconGitHub,
   action: {
     type: "link",
-    href: "https://hoppscotch.io/github",
+    href: "https://github.com/lfin-open/hoppscotch",
   },
 }
 
@@ -94,7 +94,7 @@ export const stdSupportOptionItems: HoppSupportOptionsMenuItem[] = [
   shortcuts,
   changelog,
   github,
-  invite,
-  discord,
-  twitter,
+  // invite,
+  // discord,
+  // twitter,
 ]
