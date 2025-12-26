@@ -56,20 +56,43 @@ export type OnboardingStatus = {
 const currentUser$ = new BehaviorSubject<HoppUser | null>(null);
 
 const signOut = async (reloadWindow = false) => {
-  await authQuery.logout();
+  // Check if user logged in with FusionAuth
+  const authProvider = getLocalConfig('auth_provider');
 
-  // Reload the window if both `access_token` and `refresh_token`is invalid
-  // there by the user is taken to the login page
-  if (reloadWindow) {
-    window.location.reload();
+  if (authProvider === 'fusionauth') {
+    // For FusionAuth, redirect to FusionAuth logout endpoint
+    // This will clear both local cookies and FusionAuth SSO session
+    const adminUrl = import.meta.env.VITE_ADMIN_URL || window.location.origin;
+    window.location.href = `${
+      import.meta.env.VITE_BACKEND_API_URL
+    }/auth/logout/fusionauth?redirect_uri=${encodeURIComponent(adminUrl)}`;
+
+    // Clean up local state
+    currentUser$.next(null);
+    removeLocalConfig('login_state');
+    removeLocalConfig('auth_provider');
+
+    authEvents$.next({
+      event: 'logout',
+    });
+  } else {
+    // For other providers, use regular logout
+    await authQuery.logout();
+
+    // Reload the window if both `access_token` and `refresh_token`is invalid
+    // there by the user is taken to the login page
+    if (reloadWindow) {
+      window.location.reload();
+    }
+
+    currentUser$.next(null);
+    removeLocalConfig('login_state');
+    removeLocalConfig('auth_provider');
+
+    authEvents$.next({
+      event: 'logout',
+    });
   }
-
-  currentUser$.next(null);
-  removeLocalConfig('login_state');
-
-  authEvents$.next({
-    event: 'logout',
-  });
 };
 
 const getUserDetails = async () => {
@@ -190,6 +213,14 @@ export const auth = {
     window.location.href = `${
       import.meta.env.VITE_BACKEND_API_URL
     }/auth/microsoft?redirect_uri=${import.meta.env.VITE_ADMIN_URL}`;
+  },
+
+  signInUserWithFusionAuth: () => {
+    // Store auth provider for logout handling
+    setLocalConfig('auth_provider', 'fusionauth');
+    window.location.href = `${
+      import.meta.env.VITE_BACKEND_API_URL
+    }/auth/fusionauth?redirect_uri=${import.meta.env.VITE_ADMIN_URL}`;
   },
 
   signInWithEmailLink: (url: string) => {

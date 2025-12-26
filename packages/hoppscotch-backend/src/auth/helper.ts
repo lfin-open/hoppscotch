@@ -27,6 +27,7 @@ export enum AuthProvider {
   GITHUB = 'GITHUB',
   MICROSOFT = 'MICROSOFT',
   EMAIL = 'EMAIL',
+  FUSIONAUTH = 'FUSIONAUTH',
 }
 
 /**
@@ -74,6 +75,7 @@ export const authCookieHandler = (
   // check to see if redirectUrl is a whitelisted url
   const whitelistedOrigins =
     configService.get('WHITELISTED_ORIGINS')?.split(',') ?? [];
+
   if (!whitelistedOrigins.includes(redirectUrl))
     // if it is not redirect by default to App
     redirectUrl = configService.get('VITE_BASE_URL');

@@ -4,7 +4,7 @@ import { InfraConfigEnum } from './backend/graphql';
 // Check if any input validation has failed
 export const hasInputValidationFailed = ref(false);
 
-export type SsoAuthProviders = 'google' | 'microsoft' | 'github';
+export type SsoAuthProviders = 'google' | 'microsoft' | 'github' | 'fusionauth';
 
 export type ServerConfigs = {
   providers: {
@@ -37,6 +37,18 @@ export type ServerConfigs = {
         callback_url: string;
         scope: string;
         tenant: string;
+      };
+    };
+    fusionauth: {
+      name: SsoAuthProviders;
+      enabled: boolean;
+      fields: {
+        base_url: string;
+        client_id: string;
+        client_secret: string;
+        callback_url: string;
+        scope: string;
+        tenant_id: string;
       };
     };
   };
@@ -181,6 +193,34 @@ export const GITHUB_CONFIGS: Config[] = [
   },
 ];
 
+export const FUSIONAUTH_CONFIGS: Config[] = [
+  {
+    name: InfraConfigEnum.FusionauthBaseUrl,
+    key: 'base_url',
+  },
+  {
+    name: InfraConfigEnum.FusionauthClientId,
+    key: 'client_id',
+  },
+  {
+    name: InfraConfigEnum.FusionauthClientSecret,
+    key: 'client_secret',
+  },
+  {
+    name: InfraConfigEnum.FusionauthCallbackUrl,
+    key: 'callback_url',
+  },
+  {
+    name: InfraConfigEnum.FusionauthScope,
+    key: 'scope',
+  },
+  {
+    name: InfraConfigEnum.FusionauthTenantId,
+    key: 'tenant_id',
+    optional: true,
+  },
+];
+
 export const MAIL_CONFIGS: Config[] = [
   {
     name: InfraConfigEnum.MailerSmtpUrl,
@@ -294,6 +334,7 @@ export const ALL_CONFIGS = [
   GOOGLE_CONFIGS,
   MICROSOFT_CONFIGS,
   GITHUB_CONFIGS,
+  FUSIONAUTH_CONFIGS,
   MAIL_CONFIGS,
   CUSTOM_MAIL_CONFIGS,
   DATA_SHARING_CONFIGS,

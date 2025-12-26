@@ -42,6 +42,13 @@ export function getAuthProviderRequiredKeys(
       InfraConfigEnum.MICROSOFT_SCOPE,
       InfraConfigEnum.MICROSOFT_TENANT,
     ],
+    [AuthProvider.FUSIONAUTH]: [
+      InfraConfigEnum.FUSIONAUTH_BASE_URL,
+      InfraConfigEnum.FUSIONAUTH_CLIENT_ID,
+      InfraConfigEnum.FUSIONAUTH_CLIENT_SECRET,
+      InfraConfigEnum.FUSIONAUTH_CALLBACK_URL,
+      InfraConfigEnum.FUSIONAUTH_SCOPE,
+    ],
     [AuthProvider.EMAIL]:
       env['INFRA'].MAILER_USE_CUSTOM_CONFIGS === 'true'
         ? [
@@ -283,6 +290,36 @@ export async function getDefaultInfraConfigs(): Promise<DefaultInfraConfig[]> {
       isEncrypted: false,
     },
     {
+      name: InfraConfigEnum.FUSIONAUTH_BASE_URL,
+      value: null,
+      isEncrypted: false,
+    },
+    {
+      name: InfraConfigEnum.FUSIONAUTH_CLIENT_ID,
+      value: null,
+      isEncrypted: true,
+    },
+    {
+      name: InfraConfigEnum.FUSIONAUTH_CLIENT_SECRET,
+      value: null,
+      isEncrypted: true,
+    },
+    {
+      name: InfraConfigEnum.FUSIONAUTH_CALLBACK_URL,
+      value: null,
+      isEncrypted: false,
+    },
+    {
+      name: InfraConfigEnum.FUSIONAUTH_SCOPE,
+      value: null,
+      isEncrypted: false,
+    },
+    {
+      name: InfraConfigEnum.FUSIONAUTH_TENANT_ID,
+      value: null,
+      isEncrypted: false,
+    },
+    {
       name: InfraConfigEnum.VITE_ALLOWED_AUTH_PROVIDERS,
       value: null,
       isEncrypted: false,
@@ -496,6 +533,10 @@ export async function buildDerivedEnv() {
       path: '/auth/microsoft/callback',
     },
     { key: InfraConfigEnum.GITHUB_CALLBACK_URL, path: '/auth/github/callback' },
+    {
+      key: InfraConfigEnum.FUSIONAUTH_CALLBACK_URL,
+      path: '/auth/fusionauth/callback',
+    },
   ];
   // Update callback URLs if they don't match the backend
   for (const { key, path } of callbackConfigs) {

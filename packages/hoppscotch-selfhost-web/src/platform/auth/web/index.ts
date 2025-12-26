@@ -39,6 +39,14 @@ async function signInUserWithMicrosoftFB() {
   }/auth/microsoft`
 }
 
+async function signInUserWithFusionAuthFB() {
+  // Store that we're logging in with FusionAuth for logout handling
+  await persistenceService.setLocalConfig("auth_provider", "fusionauth")
+  window.location.href = `${
+    import.meta.env.VITE_BACKEND_API_URL
+  }/auth/fusionauth`
+}
+
 async function getInitialUserDetails() {
   const res = await axios.post<{
     data?: {
@@ -296,6 +304,9 @@ export const def: AuthPlatformDef = {
   async signInUserWithMicrosoft() {
     await signInUserWithMicrosoftFB()
   },
+  async signInUserWithFusionAuth() {
+    await signInUserWithFusionAuthFB()
+  },
   async signInWithEmailLink(email: string, url: string) {
     const urlObject = new URL(url)
     const searchParams = new URLSearchParams(urlObject.search)
@@ -339,18 +350,39 @@ export const def: AuthPlatformDef = {
   },
 
   async signOutUser() {
-    // if (!currentUser$.value) throw new Error("No user has logged in")
+    // Check if user logged in with FusionAuth
+    const authProvider =
+      await persistenceService.getLocalConfig("auth_provider")
 
-    await logout()
+    if (authProvider === "fusionauth") {
+      // For FusionAuth, redirect to FusionAuth logout endpoint
+      // This will clear both local cookies and FusionAuth SSO session
+      const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin
+      window.location.href = `${import.meta.env.VITE_BACKEND_API_URL}/auth/logout/fusionauth?redirect_uri=${encodeURIComponent(baseUrl)}`
 
-    probableUser$.next(null)
-    currentUser$.next(null)
+      // Clean up local state
+      probableUser$.next(null)
+      currentUser$.next(null)
+      await persistenceService.removeLocalConfig("login_state")
+      await persistenceService.removeLocalConfig("auth_provider")
 
-    await persistenceService.removeLocalConfig("login_state")
+      authEvents$.next({
+        event: "logout",
+      })
+    } else {
+      // For other providers, use regular logout
+      await logout()
 
-    authEvents$.next({
-      event: "logout",
-    })
+      probableUser$.next(null)
+      currentUser$.next(null)
+
+      await persistenceService.removeLocalConfig("login_state")
+      await persistenceService.removeLocalConfig("auth_provider")
+
+      authEvents$.next({
+        event: "logout",
+      })
+    }
   },
 
   async refreshAuthToken() {

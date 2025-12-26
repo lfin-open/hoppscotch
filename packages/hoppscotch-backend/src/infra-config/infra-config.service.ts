@@ -298,6 +298,14 @@ export class InfraConfigService implements OnModuleInit {
           configMap.MICROSOFT_SCOPE &&
           configMap.MICROSOFT_TENANT
         );
+      case AuthProvider.FUSIONAUTH:
+        return (
+          configMap.FUSIONAUTH_BASE_URL &&
+          configMap.FUSIONAUTH_CLIENT_ID &&
+          configMap.FUSIONAUTH_CLIENT_SECRET &&
+          configMap.FUSIONAUTH_CALLBACK_URL &&
+          configMap.FUSIONAUTH_SCOPE
+        );
       case AuthProvider.EMAIL:
         if (configMap.MAILER_SMTP_ENABLE !== 'true') return false;
         if (configMap.MAILER_USE_CUSTOM_CONFIGS === 'true') {

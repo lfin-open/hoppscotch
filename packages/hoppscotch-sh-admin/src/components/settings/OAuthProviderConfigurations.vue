@@ -107,7 +107,7 @@ type ProviderFieldKeys = keyof ProviderFields;
 
 type ProviderFields = {
   [Field in keyof ServerConfigs['providers'][SsoAuthProviders]['fields']]: boolean;
-} & Partial<{ tenant: boolean }>;
+} & Partial<{ tenant: boolean; base_url: boolean; tenant_id: boolean }>;
 
 type ProviderFieldMetadata = {
   name: string;
@@ -117,29 +117,39 @@ type ProviderFieldMetadata = {
 
 const providerConfigFields = <ProviderFieldMetadata[]>[
   {
+    name: t('configs.auth_providers.base_url'),
+    key: 'base_url',
+    applicableProviders: ['fusionauth'],
+  },
+  {
     name: t('configs.auth_providers.client_id'),
     key: 'client_id',
-    applicableProviders: ['google', 'github', 'microsoft'],
+    applicableProviders: ['google', 'github', 'microsoft', 'fusionauth'],
   },
   {
     name: t('configs.auth_providers.client_secret'),
     key: 'client_secret',
-    applicableProviders: ['google', 'github', 'microsoft'],
+    applicableProviders: ['google', 'github', 'microsoft', 'fusionauth'],
   },
   {
     name: t('configs.auth_providers.callback_url'),
     key: 'callback_url',
-    applicableProviders: ['google', 'github', 'microsoft'],
+    applicableProviders: ['google', 'github', 'microsoft', 'fusionauth'],
   },
   {
     name: t('configs.auth_providers.scope'),
     key: 'scope',
-    applicableProviders: ['google', 'github', 'microsoft'],
+    applicableProviders: ['google', 'github', 'microsoft', 'fusionauth'],
   },
   {
     name: t('configs.auth_providers.tenant'),
     key: 'tenant',
     applicableProviders: ['microsoft'],
+  },
+  {
+    name: t('configs.auth_providers.tenant_id'),
+    key: 'tenant_id',
+    applicableProviders: ['fusionauth'],
   },
 ];
 
@@ -162,6 +172,14 @@ const maskState = reactive<Record<SsoAuthProviders, ProviderFields>>({
     callback_url: true,
     scope: true,
     tenant: true,
+  },
+  fusionauth: {
+    base_url: true,
+    client_id: true,
+    client_secret: true,
+    callback_url: true,
+    scope: true,
+    tenant_id: true,
   },
 });
 

@@ -22,6 +22,7 @@ import {
   CUSTOM_MAIL_CONFIGS,
   ConfigSection,
   ConfigTransform,
+  FUSIONAUTH_CONFIGS,
   GITHUB_CONFIGS,
   GOOGLE_CONFIGS,
   MAIL_CONFIGS,
@@ -119,6 +120,18 @@ export function useConfigHandler(updatedConfigs?: ServerConfigs) {
             callback_url: getFieldValue(InfraConfigEnum.MicrosoftCallbackUrl),
             scope: getFieldValue(InfraConfigEnum.MicrosoftScope),
             tenant: getFieldValue(InfraConfigEnum.MicrosoftTenant),
+          },
+        },
+        fusionauth: {
+          name: 'fusionauth',
+          enabled: allowedAuthProviders.value.includes(AuthProvider.Fusionauth),
+          fields: {
+            base_url: getFieldValue(InfraConfigEnum.FusionauthBaseUrl),
+            client_id: getFieldValue(InfraConfigEnum.FusionauthClientId),
+            client_secret: getFieldValue(InfraConfigEnum.FusionauthClientSecret),
+            callback_url: getFieldValue(InfraConfigEnum.FusionauthCallbackUrl),
+            scope: getFieldValue(InfraConfigEnum.FusionauthScope),
+            tenant_id: getFieldValue(InfraConfigEnum.FusionauthTenantId),
           },
         },
       },
@@ -264,6 +277,7 @@ export function useConfigHandler(updatedConfigs?: ServerConfigs) {
       config.providers.github,
       config.providers.google,
       config.providers.microsoft,
+      config.providers.fusionauth,
       config.mailConfigs,
       config.rateLimitConfigs,
       config.tokenConfigs,
@@ -303,6 +317,28 @@ export function useConfigHandler(updatedConfigs?: ServerConfigs) {
       // and not empty strings
       if (section.name === 'rate_limit')
         return Object.values(section.fields).some(isNotValidNumber);
+
+      // For OAuth providers, exclude optional fields from validation
+      if (['google', 'github', 'microsoft', 'fusionauth'].includes(section.name)) {
+        const providerConfigMap = {
+          google: GOOGLE_CONFIGS,
+          github: GITHUB_CONFIGS,
+          microsoft: MICROSOFT_CONFIGS,
+          fusionauth: FUSIONAUTH_CONFIGS,
+        };
+
+        const providerConfigs = providerConfigMap[section.name];
+        const optionalKeys = providerConfigs
+          .filter((c) => c.optional)
+          .map((c) => c.key);
+
+        return (
+          section.enabled &&
+          Object.entries(section.fields).some(
+            ([key, value]) => isFieldEmpty(value) && !optionalKeys.includes(key)
+          )
+        );
+      }
 
       return (
         section.enabled && Object.values(section.fields).some(isFieldEmpty)
@@ -353,6 +389,11 @@ export function useConfigHandler(updatedConfigs?: ServerConfigs) {
         config: MICROSOFT_CONFIGS,
         enabled: updatedConfigs?.providers.microsoft.enabled,
         fields: updatedConfigs?.providers.microsoft.fields,
+      },
+      {
+        config: FUSIONAUTH_CONFIGS,
+        enabled: updatedConfigs?.providers.fusionauth.enabled,
+        fields: updatedConfigs?.providers.fusionauth.fields,
       },
       {
         config: MAIL_CONFIGS,
@@ -430,6 +471,12 @@ export function useConfigHandler(updatedConfigs?: ServerConfigs) {
       {
         provider: AuthProvider.Github,
         status: updatedConfigs?.providers.github.enabled
+          ? ServiceStatus.Enable
+          : ServiceStatus.Disable,
+      },
+      {
+        provider: AuthProvider.Fusionauth,
+        status: updatedConfigs?.providers.fusionauth.enabled
           ? ServiceStatus.Enable
           : ServiceStatus.Disable,
       },

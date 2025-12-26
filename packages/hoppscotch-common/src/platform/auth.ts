@@ -228,6 +228,11 @@ export type AuthPlatformDef = {
    * @returns A promise that resolves with the user info when auth is completed
    */
   signInUserWithMicrosoft: () => Promise<void>
+  /**
+   * Signs user in with FusionAuth.
+   * @returns A promise that resolves with the user info when auth is completed
+   */
+  signInUserWithFusionAuth: () => Promise<void>
 
   /**
    * Signs out the user from auth

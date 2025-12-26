@@ -33,7 +33,6 @@ declare module 'vue' {
     HoppSmartModal: typeof import('@hoppscotch/ui')['HoppSmartModal']
     HoppSmartPicture: typeof import('@hoppscotch/ui')['HoppSmartPicture']
     HoppSmartPlaceholder: typeof import('@hoppscotch/ui')['HoppSmartPlaceholder']
-    HoppSmartSelect: typeof import('@hoppscotch/ui')['HoppSmartSelect']
     HoppSmartSelectWrapper: typeof import('@hoppscotch/ui')['HoppSmartSelectWrapper']
     HoppSmartSpinner: typeof import('@hoppscotch/ui')['HoppSmartSpinner']
     HoppSmartTab: typeof import('@hoppscotch/ui')['HoppSmartTab']

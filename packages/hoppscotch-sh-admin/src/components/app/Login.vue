@@ -46,6 +46,13 @@
           @click="signInWithMicrosoft"
         />
         <HoppSmartItem
+          v-if="allowedAuthProviders.includes('FUSIONAUTH')"
+          :loading="signingInWithFusionAuth"
+          :icon="IconFusionAuth"
+          :label="t('state.continue_fusionauth')"
+          @click="signInWithFusionAuth"
+        />
+        <HoppSmartItem
           v-if="allowedAuthProviders.includes('EMAIL')"
           :icon="IconEmail"
           :label="t('state.continue_email')"
@@ -173,6 +180,7 @@ import IconEmail from '~icons/auth/email';
 import IconGithub from '~icons/auth/github';
 import IconGoogle from '~icons/auth/google';
 import IconMicrosoft from '~icons/auth/microsoft';
+import IconFusionAuth from "~icons/auth/fusionauth"
 import IconArrowLeft from '~icons/lucide/arrow-left';
 import IconFileText from '~icons/lucide/file-text';
 
@@ -190,6 +198,7 @@ const error = ref(false);
 const signingInWithGoogle = ref(false);
 const signingInWithGitHub = ref(false);
 const signingInWithMicrosoft = ref(false);
+const signingInWithFusionAuth = ref(false);
 const signingInWithEmail = ref(false);
 const mode = ref('sign-in');
 const nonAdminUser = ref(false);
@@ -250,6 +259,19 @@ const signInWithMicrosoft = () => {
   }
 
   signingInWithMicrosoft.value = false;
+};
+
+const signInWithFusionAuth = () => {
+  signingInWithFusionAuth.value = true;
+
+  try {
+    auth.signInUserWithFusionAuth();
+  } catch (e) {
+    console.error(e);
+    toast.error(t('state.fusionauth_signin_failure'));
+  }
+
+  signingInWithFusionAuth.value = false;
 };
 
 const signInWithEmail = async () => {

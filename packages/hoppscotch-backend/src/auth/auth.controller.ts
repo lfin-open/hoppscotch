@@ -23,6 +23,7 @@ import { AuthProvider, authCookieHandler, authProviderCheck } from './helper';
 import { GoogleSSOGuard } from './guards/google-sso.guard';
 import { GithubSSOGuard } from './guards/github-sso.guard';
 import { MicrosoftSSOGuard } from './guards/microsoft-sso.guard';
+import { FusionAuthSSOGuard } from './guards/fusionauth-sso.guard';
 import { ThrottlerBehindProxyGuard } from 'src/guards/throttler-behind-proxy.guard';
 import { SkipThrottle } from '@nestjs/throttler';
 import { AUTH_PROVIDER_NOT_SPECIFIED } from 'src/errors';
@@ -180,13 +181,100 @@ export class AuthController {
   }
 
   /**
+   ** Route to initiate SSO auth via FusionAuth
+   */
+  @Get('fusionauth')
+  @UseGuards(FusionAuthSSOGuard)
+  async fusionAuth(@Request() req) {}
+
+  /**
+   ** Callback URL for FusionAuth SSO
+   * @see https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/
+   */
+  @Get('fusionauth/callback')
+  @SkipThrottle()
+  @UseGuards(FusionAuthSSOGuard)
+  @UseInterceptors(UserLastLoginInterceptor)
+  async fusionAuthRedirect(@Request() req, @Res() res) {
+    // Decode state parameter to get redirect_uri
+    let redirectUri = null;
+    try {
+      if (req.query.state) {
+        const stateData = JSON.parse(
+          Buffer.from(req.query.state, 'base64').toString('utf-8'),
+        );
+        redirectUri = stateData.redirect_uri;
+      }
+    } catch (error) {
+      // Silent fail - will use default redirect
+    }
+
+    const authTokens = await this.authService.generateAuthTokens(req.user.uid);
+    if (E.isLeft(authTokens)) throwHTTPErr(authTokens.left);
+    authCookieHandler(
+      res,
+      authTokens.right,
+      true,
+      redirectUri,
+      this.configService,
+    );
+  }
+
+  /**
    ** Log user out by clearing cookies containing auth tokens
    */
   @Get('logout')
   async logout(@Res() res: Response) {
-    res.clearCookie('access_token');
-    res.clearCookie('refresh_token');
+    const cookieOptions = {
+      httpOnly: true,
+      secure: this.configService.get('INFRA.ALLOW_SECURE_COOKIES') === 'true',
+      sameSite: 'lax' as const,
+    };
+
+    res.clearCookie('access_token', cookieOptions);
+    res.clearCookie('refresh_token', cookieOptions);
     return res.status(200).send();
+  }
+
+  /**
+   ** Log user out from FusionAuth SSO session
+   * This performs a complete logout by:
+   * 1. Clearing local Hoppscotch auth cookies
+   * 2. Redirecting to FusionAuth logout endpoint to terminate SSO session
+   * @see https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints#logout
+   */
+  @Get('logout/fusionauth')
+  async logoutFusionAuth(
+    @Res() res: Response,
+    @Query('redirect_uri') redirectUri?: string,
+  ) {
+    const cookieOptions = {
+      httpOnly: true,
+      secure: this.configService.get('INFRA.ALLOW_SECURE_COOKIES') === 'true',
+      sameSite: 'lax' as const,
+    };
+
+    // Clear local cookies first
+    res.clearCookie('access_token', cookieOptions);
+    res.clearCookie('refresh_token', cookieOptions);
+
+    // Build FusionAuth logout URL
+    const fusionAuthBaseUrl = this.configService.get(
+      'INFRA.FUSIONAUTH_BASE_URL',
+    );
+    const clientId = this.configService.get('INFRA.FUSIONAUTH_CLIENT_ID');
+    const baseUrl = this.configService.get('VITE_BASE_URL');
+
+    // Build logout URL - only include post_logout_redirect_uri if it's configured in FusionAuth
+    // For now, redirect without post_logout_redirect_uri to avoid validation errors
+    // Make sure to add the redirect URI in FusionAuth Application settings first
+    const logoutUrl = `${fusionAuthBaseUrl}/oauth2/logout?client_id=${clientId}`;
+
+    // Optionally include post_logout_redirect_uri if configured
+    // Uncomment this line after adding the URL to FusionAuth Application Logout URL
+    // logoutUrl += `&post_logout_redirect_uri=${encodeURIComponent(postLogoutRedirectUri)}`;
+
+    return res.redirect(logoutUrl);
   }
 
   @Get('verify/admin')
