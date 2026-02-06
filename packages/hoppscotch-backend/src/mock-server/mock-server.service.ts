@@ -1094,34 +1094,46 @@ export class MockServerService {
   private parseExample(exampleData: any, requestId: string) {
     try {
       // Parse endpoint to extract path and query parameters
+      let endpointString = String(exampleData.endpoint ?? '');
       let path = '/';
       const queryParams: Record<string, string> = {};
 
-      if (exampleData.endpoint) {
-        // Strip out Hoppscotch host placeholder if present
-        const cleanEndpoint = exampleData.endpoint.replace(/^<<host>>/, '');
-
-        const url = new URL(
-          cleanEndpoint,
-          'http://dummy.com', // Base URL for parsing
-        );
-        // Decode the pathname to preserve Hoppscotch variable syntax (<<variable>>)
-        path = decodeURIComponent(url.pathname);
-
-        // Remove mock server prefix (/mock/{subdomain}) if present
-        // This handles cases where the full URL includes the mock server path
-        path = path.replace(/^\/mock\/[^\/]+/, '');
-
-        // Ensure path starts with /
-        if (!path.startsWith('/')) {
-          path = '/' + path;
+      // If endpoint starts with '<<', then cut the string after '>>'
+      if (endpointString.startsWith('<<')) {
+        const endIndex = endpointString.indexOf('>>');
+        if (endIndex !== -1) {
+          endpointString = endpointString.slice(endIndex + 2);
         }
-
-        // Extract query parameters
-        url.searchParams.forEach((value, key) => {
-          queryParams[key] = value;
-        });
       }
+
+      // Remove domain if present
+      endpointString = endpointString.replace(
+        /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}/,
+        '',
+      );
+
+      // Use URL to parse path and query parameters
+      const url = new URL(
+        endpointString,
+        'http://dummy.com', // Base URL for parsing
+      );
+
+      // Decode the pathname to preserve Hoppscotch variable syntax (<<variable>>)
+      path = decodeURIComponent(url.pathname);
+
+      // Remove mock server prefix (/mock/{subdomain}) if present
+      // This handles cases where the full URL includes the mock server path
+      path = path.replace(/^\/mock\/[^\/]+/, '');
+
+      // Ensure path starts with /
+      if (!path.startsWith('/')) {
+        path = '/' + path;
+      }
+
+      // Extract query parameters
+      url.searchParams.forEach((value, key) => {
+        queryParams[key] = value;
+      });
 
       return {
         id: exampleData.key || `${requestId}-${exampleData.name}`,
