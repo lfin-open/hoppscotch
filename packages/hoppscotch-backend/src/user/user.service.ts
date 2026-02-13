@@ -169,7 +169,7 @@ export class UserService {
     profile,
   ) {
     const userDisplayName = !profile.displayName ? null : profile.displayName;
-    const userPhotoURL = !profile.photos ? null : profile.photos[0].value;
+    const userPhotoURL = profile.photos?.[0]?.value ?? null;
 
     const createdUser = await this.prisma.user.create({
       data: {
@@ -238,7 +238,7 @@ export class UserService {
         },
         data: {
           displayName: !profile.displayName ? null : profile.displayName,
-          photoURL: !profile.photos ? null : profile.photos[0].value,
+          photoURL: profile.photos?.[0]?.value ?? null,
           lastLoggedOn: new Date(),
         },
       });
